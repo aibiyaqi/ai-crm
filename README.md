@@ -306,7 +306,8 @@
 | **日志工具** | [`logger.py`](AI_CRM/logger.py) | 控制台 + 文件双输出 |
 | **数据模型** | [`models.py`](AI_CRM/models.py) | Pydantic 模型：Account/User/Message/CustomerProfile/AgentState |
 | **FastAPI 接口** | [`api.py`](AI_CRM/api.py) | 5 个 API 端点 + JWT Bearer 认证 + CORS 白名单 + Rate Limiting |
-| **Streamlit 前端** | [`app.py`](AI_CRM/app.py) | 4 页面 + 管理员后台 + 多对话管理 + 启动环境校验 |
+| **Streamlit 前端** | [`app.py`](AI_CRM/app.py) | 对话 / 客户 / 跟进 / 告警 / 统计 5 页面 + 管理员后台 + 多对话管理 |
+| **告警中心** | [`scheduler.py`](AI_CRM/scheduler.py) | 事件驱动 + 分层跑批产出告警；前端支持「立即巡检 / 标记已读 / 未读角标」 |
 | **熔断器+重试** | [`utils/circuit_breaker.py`](AI_CRM/utils/circuit_breaker.py) | Circuit Breaker 状态机 + 指数退避重试（含随机抖动） |
 
 ---

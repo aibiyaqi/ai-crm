@@ -687,6 +687,18 @@ def render_authenticated_sidebar():
         # -------- 系统状态 --------
         st.markdown("### [AI] 系统状态")
         backend = st.session_state.backend
+
+        # 未读告警角标（事件驱动筛查的产出）
+        _db = backend.get("db")
+        if _db is not None:
+            _unread = _db.count_unread_alerts()
+            if _unread:
+                st.markdown(
+                    f"<div style='background:#fff4e5;border:1px solid #ffb74d;"
+                    f"border-radius:8px;padding:8px 10px;margin-bottom:8px;'>"
+                    f"[ALARM] 未读告警 <b>{_unread}</b> 条 · 去「告警」页处理</div>",
+                    unsafe_allow_html=True,
+                )
         
         col1, col2 = st.columns(2)
         with col1:
@@ -787,9 +799,9 @@ def render_authenticated_sidebar():
         st.markdown("### [FOLDER] 导航")
         
         # 普通用户可见页面（知识库管理仅管理员可见）
-        user_pages = ["[CHAT] 对话", "[USERS] 客户信息", "[PHONE] 跟进", "[CHART] 统计"]
+        user_pages = ["[CHAT] 对话", "[USERS] 客户信息", "[PHONE] 跟进", "[ALARM] 告警", "[CHART] 统计"]
         admin_pages = [
-            "[USERS] 客户信息", "[PHONE] 跟进", "[BOOKS] 知识库", "[CHART] 统计",
+            "[USERS] 客户信息", "[PHONE] 跟进", "[ALARM] 告警", "[BOOKS] 知识库", "[CHART] 统计",
             "[SHIELD] 用户管理", "[MONITOR] 监控大盘",
         ]
         
@@ -1300,6 +1312,97 @@ def render_follow_up_page():
             st.error(f"[FAIL] 统计失败: {e}")
 
 
+# ==================== 11c. 告警中心（事件驱动筛查 → 前端处理） ====================
+def render_alerts_page():
+    """
+    告警中心
+    ========
+    展示「事件驱动 + 分层跑批」产出的主动告警，并支持前端处理：
+      1. 立即巡检：手动触发一轮 事件消费 → 21点粗筛 → 次日精筛，现场演示规则命中
+      2. 标记已读 / 全部已读
+      3. 按未读/全部筛选，展示命中原因、归属顾问、来源与时间
+
+    数据来源：alerts 表（scheduler 定时写入 / manual 手动写入）
+    """
+    db = st.session_state.backend.get("db")
+    if db is None:
+        st.error("[FAIL] 数据库未就绪")
+        return
+
+    st.markdown('<p class="main-title">[ALARM] 告警中心</p>', unsafe_allow_html=True)
+    st.caption(
+        "事件驱动 + 分层跑批：录入客户即投递延迟消息 → 到期命中规则入待办池 → "
+        "粗筛/精筛按规则生成告警 → 前端处理（已读）"
+    )
+
+    unread = db.count_unread_alerts()
+    total = len(db.list_alerts(limit=500))
+    due = len(db.list_due_follow_ups(due_days=14))
+    c1, c2, c3 = st.columns(3)
+    c1.metric("未读告警", unread)
+    c2.metric("告警总数", total)
+    c3.metric("待跟进（到期/超期）", due)
+
+    col_a, col_b, _ = st.columns([1.2, 1, 2])
+    with col_a:
+        if st.button("[REFRESH] 立即巡检", type="primary", use_container_width=True):
+            with st.spinner("正在执行：事件消费 → 粗筛 → 精筛 ..."):
+                try:
+                    from scheduler import get_scheduler
+                    result = get_scheduler().run_once()
+                    st.success(
+                        f"巡检完成：扫描 {result.get('scanned', 0)} 条，"
+                        f"新增告警 {result.get('created', 0)} 条"
+                    )
+                except Exception as e:
+                    st.error(f"[FAIL] 巡检失败: {e}")
+            st.rerun()
+    with col_b:
+        if st.button("[OK] 全部已读", use_container_width=True, disabled=unread == 0):
+            n = db.mark_all_alerts_read()
+            st.success(f"已标记 {n} 条为已读")
+            st.rerun()
+
+    st.divider()
+    view = st.radio("筛选", ["未读", "全部"], horizontal=True, label_visibility="collapsed")
+    alerts = db.list_alerts(status="unread" if view == "未读" else None, limit=200)
+
+    if not alerts:
+        st.info("暂无告警：当前客户都跟得上节奏")
+        return
+
+    sev_style = {
+        "high": ("[HIGH]", "🔴"),
+        "medium": ("[MED]", "🟠"),
+        "low": ("[LOW]", "🟢"),
+    }
+    for a in alerts:
+        tag, dot = sev_style.get(a.get("severity"), ("[MED]", "🟠"))
+        with st.container(border=True):
+            head, action = st.columns([6, 1])
+            with head:
+                name = a.get("customer_name") or (a.get("customer_id") or "")[:8]
+                st.markdown(
+                    f"{dot} **{a.get('alert_type', '异常')}** ｜ 客户：**{name}** ｜ {tag}"
+                )
+            with action:
+                if a.get("status") != "read":
+                    if st.button("标记已读", key=f"read_{a['alert_id']}"):
+                        db.mark_alert_read(a["alert_id"])
+                        st.rerun()
+                else:
+                    st.caption("已读")
+
+            reasons = a.get("reasons") or []
+            if reasons:
+                st.markdown("命中原因：" + "；".join(str(r) for r in reasons))
+            st.caption(
+                f"归属顾问：{a.get('advisor_id') or '-'} ｜ "
+                f"来源：{a.get('source') or '-'} ｜ "
+                f"时间：{a.get('created_at') or '-'}"
+            )
+
+
 # ==================== 12. 知识库管理页面 ====================
 def render_knowledge_page():
     """渲染知识库管理页面"""
@@ -1673,6 +1776,8 @@ def main():
             render_customer_page()
         elif page == "[PHONE] 跟进":
             render_follow_up_page()
+        elif page == "[ALARM] 告警":
+            render_alerts_page()
         elif page == "[BOOKS] 知识库":
             # 仅管理员可访问
             account = st.session_state.current_account

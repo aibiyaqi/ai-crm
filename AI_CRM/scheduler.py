@@ -415,13 +415,17 @@ class AlertScheduler:
                     db.mark_todo_done(t["todo_id"])
                     continue
                 # 命中 → 按「客户+类型+业务日」去重写告警
+                # 补上客户姓名/顾问：告警列表直接可读，不用再回表拼 ID
+                customer = db.get_customer(cid)
+                customer_name = customer.name if customer else None
+                advisor_id = t.get("advisor_id") or (customer.advisor_id if customer else None)
                 for alert_type, rs in _group_reasons_by_type(reasons).items():
                     ok = db.upsert_alert(
                         customer_id=cid,
                         alert_type=alert_type,
                         reasons=rs,
-                        customer_name=None,
-                        advisor_id=t.get("advisor_id"),
+                        customer_name=customer_name,
+                        advisor_id=advisor_id,
                         severity=_severity_of(alert_type),
                         source="scheduler",
                     )
