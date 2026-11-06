@@ -1,0 +1,39 @@
+# ============================================================
+# .dockerignore - Docker 构建上下文排除清单
+# ============================================================
+# 减少构建上下文大小，提升构建速度
+
+# 版本控制
+.git
+.gitignore
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# 环境 & 虚拟环境
+.env
+CRM_ENV/
+venv/
+.venv/
+
+# 运行时数据（由 docker-compose volumes 管理）
+AI_CRM/crm.db
+AI_CRM/utils/chroma_kb/
+AI_CRM/logfile/
+
+# 冗余文件
+*.whl
+*.log
+
+# 项目文档（非运行时必需）
+README.md
+plans/
+*.md
+
+# IDE 配置
+.vscode/
+.idea/

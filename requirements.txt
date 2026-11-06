@@ -1,0 +1,46 @@
+# ==================== 核心框架 ====================
+langchain==0.2.16              # LangChain 框架
+langchain-community==0.2.16    # LangChain 社区集成
+langchain-text-splitters==0.2.2  # LangChain 文本分块（0.2.x 拆分包）
+langgraph==0.2.9               # LangGraph 工作流编排
+langchain-chroma==0.1.4        # LangChain Chroma 向量库集成
+
+# ==================== 通义千问 ====================
+dashscope==1.20.0              # 通义千问官方 SDK
+
+# ==================== 向量数据库 ====================
+chromadb==0.4.24               # ⚠️ 必须用 0.4.24！0.5.0 与 langchain-chroma 不兼容
+
+# ==================== 检索组件 ====================
+rank-bm25==0.2.2              # BM25 关键词检索（RAG 用）
+jieba==0.42.1                  # 🔧 中文分词（BM25中文支持，替代简单正则切分）
+sentence-transformers==3.0.1   # 🆕 BGE本地嵌入模型（~33MB） + Cross-Encoder重排序（~80MB）
+                               # ⚠️ 可选：如改用本地BGE嵌入，需安装此包
+                               # ⚠️ 如无 VPN，设置镜像：set HF_ENDPOINT=https://hf-mirror.com
+
+# ==================== Web 框架 ====================
+fastapi==0.115.0               # FastAPI 后端框架
+uvicorn[standard]==0.30.6      # ASGI 服务器（运行 FastAPI）
+python-multipart==0.0.9        # 上传接口（File/Form）必需，缺了 FastAPI 启动即报错
+pydantic==2.9.2                # 数据校验
+slowapi==0.1.9                 # API 速率限制（防暴力破解/DoS）
+streamlit==1.37.0              # 🆕 Streamlit 可视化前端界面（pip install 后可用）
+
+# ==================== 数据库 ====================
+sqlalchemy==2.0.35             # SQL 工具包
+aiosqlite==0.20.0              # SQLite 异步支持（本地开发/回滚通道）
+pymysql==1.1.1                 # MySQL 驱动（DB_ENGINE=mysql）
+dbutils==3.1.0                 # MySQL 连接池（PooledDB）
+cryptography==43.0.1           # MySQL 8 caching_sha2_password 认证需要
+redis==5.0.8                   # Redis 客户端（意图缓存/会话令牌/限流/延迟队列/分布式锁；不可用时自动降级）
+
+# ==================== 压测 ====================
+locust==2.32.4                 # 🆕 Locust 压测框架（100 并发 HTTP 端到端压测）
+
+# ==================== 搜索工具 ====================
+duckduckgo-search==7.5.1      # 🟢 免费网络搜索，无需 API Key
+
+# ==================== 工具库 ====================
+python-dotenv==1.0.1           # 读取 .env 配置
+tiktoken==0.7.0               # Token 计数（控制用量）
+requests==2.32.3               # HTTP 请求

@@ -1,0 +1,43 @@
+# ==================== 敏感信息（绝不提交） ====================
+.env
+.env.*
+!.env.example
+AI_CRM/.env
+AI_CRM/.env.local
+
+# ==================== 数据库 / 运行时数据 ====================
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+backup/
+logfile/
+AI_CRM/logfile/
+AI_CRM/loadtest_reports/
+AI_CRM/utils/chroma_kb/
+chroma_data/
+
+# ==================== 开发/构建缓存 ====================
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.dev/
+CRM_ENV/
+venv/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# ==================== 内部规划与过程记录 ====================
+plans/
+
+# ==================== IDE / 系统文件 ====================
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+Desktop.ini

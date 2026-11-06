@@ -1,0 +1,169 @@
+# ============================================================
+# docker-compose.yml - AI CRM 智能客户经营平台
+# ============================================================
+# 一键部署：
+#   docker-compose up -d
+#
+# 访问：
+#   Streamlit 前端: http://localhost:8501
+#   FastAPI 接口:   http://localhost:8000
+#
+# 环境变量配置：
+#   1. 复制 .env.example 为 .env
+#   2. 填入 QWEN_API_KEY
+#   3. 启动即可
+#
+# 数据持久化：
+#   - MySQL 数据      → ./data/mysql/
+#   - Chroma 向量库   → ./data/chroma_kb/
+#   - Redis AOF       → ./data/redis/
+#   - 日志文件        → ./data/logfile/
+#
+# 说明（P1/P6）：
+#   - 业务库/评测库/检查点库统一落在 MySQL（crm 库）
+#   - SQLite 仍保留为「本地开发 / 回滚」通道：把 DB_ENGINE 改回 sqlite 即可
+# ============================================================
+
+services:
+  # ==================== MySQL 8.0（唯一持久化事实源） ====================
+  mysql:
+    image: mysql:8.0
+    container_name: ai-crm-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-crm_root_dev}
+      MYSQL_DATABASE: ${DB_MYSQL_DATABASE:-crm}
+      MYSQL_USER: ${DB_MYSQL_USER:-crm_app}
+      MYSQL_PASSWORD: ${DB_MYSQL_PASSWORD:-crm_dev_pass}
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+08:00
+      - --max_connections=300
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      # 首次启动自动建表（12 张业务表）
+      - ./AI_CRM/sql/mysql/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==================== Redis（缓存 / 限流 / 延迟队列 / 分布式锁） ====================
+  redis:
+    image: redis:7.2-alpine
+    container_name: ai-crm-redis
+    ports:
+      - "6379:6379"
+    # maxmemory-policy 用 volatile-lru：
+    #   allkeys-lru 会连"锁/队列"一起淘汰；volatile-lru 只淘汰带 TTL 的缓存键，
+    #   延迟队列即使被淘汰也能从 MySQL 的 delayed_messages 重建。
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - volatile-lru
+      - --requirepass
+      - ${REDIS_PASSWORD:-crm_redis_dev}
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-crm_redis_dev}
+    restart: unless-stopped
+
+  streamlit:
+    build: .
+    container_name: ai-crm-streamlit
+    ports:
+      - "8501:8501"           # Streamlit 前端
+    env_file:
+      - .env                  # API Key 等敏感配置
+    environment:
+      # 国内用户如无 VPN，取消下面注释以使用 HuggingFace 镜像
+      # - HF_ENDPOINT=https://hf-mirror.com
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      # -------- 数据库：MySQL --------
+      - DB_ENGINE=mysql
+      - DB_MYSQL_HOST=mysql
+      - DB_MYSQL_PORT=3306
+      - DB_MYSQL_USER=${DB_MYSQL_USER:-crm_app}
+      - DB_MYSQL_PASSWORD=${DB_MYSQL_PASSWORD:-crm_dev_pass}
+      - DB_MYSQL_DATABASE=${DB_MYSQL_DATABASE:-crm}
+      # -------- Redis --------
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-crm_redis_dev}@redis:6379/0
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-crm_redis_dev}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # 数据持久化（容器重启数据不丢失）
+      - ./data/chroma_kb:/app/AI_CRM/utils/chroma_kb
+      - ./data/logfile:/app/AI_CRM/logfile
+      # 回滚通道：需要退回 SQLite 时，取消下面注释并把 DB_ENGINE 改为 sqlite
+      # - ./data/crm.db:/app/AI_CRM/crm.db
+    restart: unless-stopped
+    healthcheck:
+      # 用 Streamlit 探针：GET / 会触发脚本执行（含后端初始化），容易超时误判
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  api:
+    build: .
+    container_name: ai-crm-api
+    ports:
+      - "8000:8000"           # FastAPI 接口
+    env_file:
+      - .env
+    environment:
+      # 国内用户如无 VPN，取消下面注释
+      # - HF_ENDPOINT=https://hf-mirror.com
+      # -------- 数据库：MySQL --------
+      - DB_ENGINE=mysql
+      - DB_MYSQL_HOST=mysql
+      - DB_MYSQL_PORT=3306
+      - DB_MYSQL_USER=${DB_MYSQL_USER:-crm_app}
+      - DB_MYSQL_PASSWORD=${DB_MYSQL_PASSWORD:-crm_dev_pass}
+      - DB_MYSQL_DATABASE=${DB_MYSQL_DATABASE:-crm}
+      # -------- Redis --------
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-crm_redis_dev}@redis:6379/0
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-crm_redis_dev}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data/chroma_kb:/app/AI_CRM/utils/chroma_kb
+      - ./data/logfile:/app/AI_CRM/logfile
+    command: ["python", "AI_CRM/api.py"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/status')"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      # RAG 模型加载（BGE + reranker）在冷启动时可能耗时 1~2 分钟，
+      # 给足 start_period，避免误判 unhealthy 触发容器编排层的抖动
+      start_period: 120s

@@ -1,0 +1,204 @@
+{
+  "generated_at": "2026-09-11T21:06:55",
+  "signals": {
+    "mode": "real",
+    "threshold": 0.5,
+    "kb_count": 14,
+    "query_count": 12,
+    "chunk_total": 60,
+    "chunk_pass": 28,
+    "pass_rate": 0.4667,
+    "score_p10": 0.3983,
+    "score_p50": 0.4804,
+    "score_mean": 0.517,
+    "rerank_gap_mean": 0.3274,
+    "rerank_gap_n": 12,
+    "per_query": [
+      {
+        "query": "初三数学一对一的课时费是多少",
+        "scores": [
+          0.8087,
+          0.6672,
+          0.6262,
+          0.6228,
+          0.6227
+        ],
+        "pass": 5,
+        "returned": 5,
+        "top1": 0.8087,
+        "rerank_gap": 0.0128
+      },
+      {
+        "query": "有没有中考冲刺班",
+        "scores": [
+          0.4286,
+          0.4009,
+          0.3955,
+          0.3933,
+          0.3842
+        ],
+        "pass": 0,
+        "returned": 5,
+        "top1": 0.4286,
+        "rerank_gap": 0.0121
+      },
+      {
+        "query": "你们师资力量怎么样",
+        "scores": [
+          0.591,
+          0.5117,
+          0.4569,
+          0.4429,
+          0.4423
+        ],
+        "pass": 2,
+        "returned": 5,
+        "top1": 0.591,
+        "rerank_gap": 0.085
+      },
+      {
+        "query": "续费有什么优惠",
+        "scores": [
+          0.4597,
+          0.456,
+          0.4396,
+          0.4128,
+          0.4042
+        ],
+        "pass": 0,
+        "returned": 5,
+        "top1": 0.4597,
+        "rerank_gap": 0.3616
+      },
+      {
+        "query": "退费怎么退",
+        "scores": [
+          0.7059,
+          0.5233,
+          0.4756,
+          0.4683,
+          0.3983
+        ],
+        "pass": 2,
+        "returned": 5,
+        "top1": 0.7059,
+        "rerank_gap": 0.7538
+      },
+      {
+        "query": "初三数学一对一课时费大概多少？",
+        "scores": [
+          0.8033,
+          0.6788,
+          0.6404,
+          0.6307,
+          0.6289
+        ],
+        "pass": 5,
+        "returned": 5,
+        "top1": 0.8033,
+        "rerank_gap": 0.0145
+      },
+      {
+        "query": "你们都有哪些班型？",
+        "scores": [
+          0.567,
+          0.4585,
+          0.4472,
+          0.3982,
+          0.3766
+        ],
+        "pass": 1,
+        "returned": 5,
+        "top1": 0.567,
+        "rerank_gap": 0.7353
+      },
+      {
+        "query": "高一英语小班怎么报名",
+        "scores": [
+          0.6301,
+          0.6185,
+          0.5672,
+          0.5315,
+          0.5313
+        ],
+        "pass": 5,
+        "returned": 5,
+        "top1": 0.6301,
+        "rerank_gap": 0.523
+      },
+      {
+        "query": "课程体系是怎么设置的",
+        "scores": [
+          0.5647,
+          0.4963,
+          0.4898,
+          0.4804,
+          0.4678
+        ],
+        "pass": 1,
+        "returned": 5,
+        "top1": 0.5647,
+        "rerank_gap": 0.0789
+      },
+      {
+        "query": "老学员续费有优惠吗",
+        "scores": [
+          0.5519,
+          0.5446,
+          0.5278,
+          0.4728,
+          0.4715
+        ],
+        "pass": 3,
+        "returned": 5,
+        "top1": 0.5519,
+        "rerank_gap": 0.0555
+      },
+      {
+        "query": "退费流程是什么",
+        "scores": [
+          0.6833,
+          0.5428,
+          0.5011,
+          0.4734,
+          0.4276
+        ],
+        "pass": 3,
+        "returned": 5,
+        "top1": 0.6833,
+        "rerank_gap": 0.8753
+      },
+      {
+        "query": "中考冲刺班和普通班区别",
+        "scores": [
+          0.5011,
+          0.4691,
+          0.4489,
+          0.4308,
+          0.4301
+        ],
+        "pass": 1,
+        "returned": 5,
+        "top1": 0.5011,
+        "rerank_gap": 0.4205
+      }
+    ],
+    "embedding_model": "BAAI/bge-small-zh-v1.5",
+    "reranker_model": "BAAI/bge-reranker-base",
+    "corpus": "local_k12_offline",
+    "kb_diagnosis": {
+      "persist_dir": "utils/chroma_kb",
+      "exists": true,
+      "collection": "crm_kb",
+      "count": 10,
+      "dim": 384
+    },
+    "intent_signal": {
+      "total": 13,
+      "rule_hit": 10,
+      "rule_hit_rate": 0.7692,
+      "rule_accuracy": 1.0,
+      "e2e_accuracy": 1.0
+    }
+  }
+}
