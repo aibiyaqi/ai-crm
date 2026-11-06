@@ -814,18 +814,6 @@ LOADTEST_TOKENS_FILE=.dev/loadtest_tokens.json \
 > token 预置必须放在 Locust 进程外：gevent 会 monkey-patch socket，
 > 压测进程里直连 MySQL 容易 `WinError 10053`。
 
-### 12.5.4 演示账号（仅本地演示）
-
-| 账号 | 密码 | 角色 |
-|---|---|---|
-| `admin` | `admin123` | 管理员（可见知识库/用户管理） |
-| `advisor01` | `Crm@2026` | 课程顾问 |
-| `advisor02` | `Crm@2026` | 课程顾问 |
-| `advisor03` | `Crm@2026` | 课程顾问 |
-
-说明：`admin` 密码来自 `.env`；顾问账号与演示客户由 `scripts/seed_demo_data.py` 生成。
-**生产环境必须修改这些密码。**
-
 ---
 
 ## 13. 安全措施
@@ -846,24 +834,7 @@ LOADTEST_TOKENS_FILE=.dev/loadtest_tokens.json \
 | **🗄️ 数据层** | SQLite WAL 模式 + 连接优化（busy_timeout=5000） | ✅ 已实施 | [`memory_sqlite.py:65-85`](AI_CRM/memory_sqlite.py:65) |
 | **🛡️ 数据层** | Circuit Breaker 熔断器 + 指数退避重试（含随机抖动） | ✅ 已实施 | [`utils/circuit_breaker.py`](AI_CRM/utils/circuit_breaker.py) |
 
-### 13.2 敏感文件保护（.gitignore）
-
-```
-.env                  # ✅ API Key 不泄露
-__pycache__/          # ✅ Python 缓存
-utils/chroma_kb/      # ✅ Chroma 持久化数据
-*.log / logfile/      # ✅ 日志文件
-*.sqlite / crm.db     # ✅ SQLite 数据库（含用户数据）
-```
-
-### 13.3 API Key 管理
-
-- **启动校验**：系统启动时自动验证 `QWEN_API_KEY` 环境变量，缺失则直接退出并打印错误信息（[`config.py:28-57`](AI_CRM/config.py:28)）
-- 登录 [通义千问控制台](https://dashscope.aliyun.com/) 设置每日调用限额
-- 建议：**1000 次/天**，月度预算告警 **¥10**
-- 可选：开启 IP 白名单
-
-### 13.4 SQL 注入 6 层纵深防御
+### 13.2 SQL 注入 6 层纵深防御
 
 [`sql_agent.py:47-100`](AI_CRM/sql_agent.py:47) 的 `_validate_sql_safe()` 函数实现多层校验：
 
@@ -876,7 +847,7 @@ utils/chroma_kb/      # ✅ Chroma 持久化数据
 | **L5** | 系统表保护 | 过滤 `sqlite_` 前缀的表，防止读取 `sqlite_master` 等系统表 |
 | **L6** | 字符串字面量剥离 | 去除 SQL 字符串中的引号内容后再次校验，防止 `SEL'ECT'` 绕过 |
 
-### 13.5 文件上传安全
+### 13.3 文件上传安全
 
 [`api.py:406-467`](AI_CRM/api.py:406) 的 `upload_document()` 中实现：
 
@@ -887,7 +858,7 @@ utils/chroma_kb/      # ✅ Chroma 持久化数据
 | **文件名安全** | 使用 UUID 重命名文件，防止路径遍历攻击 |
 | **异常处理** | try/except 兜底所有 IO 错误，返回友好错误提示 |
 
-### 13.6 Token 管控（省钱防溢出）
+### 13.4 Token 管控（省钱防溢出）
 
 | 参数 | 值 | 说明 |
 |------|-----|------|
