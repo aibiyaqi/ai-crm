@@ -299,7 +299,7 @@
 | **RAG 知识库** | [`rag_law.py`](AI_CRM/rag_law.py) | Chroma + BM25 混合检索 + Cross-Encoder 重排序 |
 | **SQL Agent** | [`sql_agent.py`](AI_CRM/sql_agent.py) | 自然语言→SQL→6层防注入校验→执行→结果转自然语言 |
 | **搜索工具** | [`web_search.py`](AI_CRM/web_search.py) | DuckDuckGo 免费搜索，支持格式化返回 |
-| **工具注册表** | [`tools.py`](AI_CRM/tools.py) | 3 个工具统一注册/执行/定义 |
+| **工具注册表** | [`tools.py`](AI_CRM/tools.py) | 7 个工具统一注册/执行/定义（含跟进三件套与异常筛查） |
 | **工作流编排** | [`agent.py`](AI_CRM/agent.py) | LangGraph 7 节点 StateGraph + 条件路由 |
 | **用户认证** | [`auth.py`](AI_CRM/auth.py) | 密码/验证码登录、注册、重置、管理员初始化 + secrets 随机密码 |
 | **配置管理** | [`config.py`](AI_CRM/config.py) | 10 类全局配置 + validate_env_or_exit() 启动校验 |
@@ -399,7 +399,11 @@ INTENT_RULES = {
 |------|------|---------|------|
 | **`web_search`** | 搜索互联网获取实时信息 | "今天AI有什么新闻？" | DuckDuckGo 免费 API |
 | **`sql_query`** | 自然语言查询客户数据库 | "查询所有高价值客户" | SQLAgent 转 SQL 执行 |
-| **`save_customer_profile`** | 保存客户画像到数据库 | "我的客户叫张三，在腾讯工作" | 写入 SQLite customer_profiles 表 |
+| **`save_customer_profile`** | 保存客户画像到数据库 | "我的客户叫张三，在腾讯工作" | 写入 customer_profiles 表 |
+| **`screen_anomaly_customers`** | 异常客户筛查（高意向未跟进/流失风险/资料不全） | "哪些客户该跟进了？" | 规则引擎 + 画像字段 |
+| **`record_follow_up`** | 记录一次跟进（方式/内容/结果/下次时间） | "今天给张一诺打了电话，有意向" | 写 follow_ups + 回写画像最近跟进时间 |
+| **`list_due_follow_ups`** | 待跟进提醒清单（到期 + 超期） | "今天该跟谁？" | 按 next_follow_up_at 查询 |
+| **`follow_up_stats`** | 跟进转化统计 | "这个月跟进了多少、转化率多少？" | 按结果口径聚合 |
 
 ### 6.2 工具注册机制
 
@@ -606,7 +610,7 @@ AI_CRM/                          # 项目根目录
 ├── agent.py                     # LangGraph 工作流编排（7节点 + 条件路由）
 ├── api.py                       # FastAPI 外部 API 接口（5端点）
 ├── auth.py                      # 用户认证模块（登录/注册/重置/管理员）
-├── tools.py                     # Function Calling 工具注册表（3工具）
+├── tools.py                     # Function Calling 工具注册表（7 工具）
 ├── llms.py                      # 通义千问 LLM 封装（流式 + FC + Token统计）
 ├── rag_law.py                   # RAG 知识库（Chroma + BM25 + Cross-Encoder）
 ├── sql_agent.py                 # SQL 自然语言查询 Agent
