@@ -813,6 +813,18 @@ LOADTEST_TOKENS_FILE=.dev/loadtest_tokens.json \
 > token 预置必须放在 Locust 进程外：gevent 会 monkey-patch socket，
 > 压测进程里直连 MySQL 容易 `WinError 10053`。
 
+### 12.5.4 演示账号（仅本地演示）
+
+| 账号 | 密码 | 角色 |
+|---|---|---|
+| `admin` | `admin123` | 管理员（可见知识库/用户管理） |
+| `advisor01` | `Crm@2026` | 课程顾问 |
+| `advisor02` | `Crm@2026` | 课程顾问 |
+| `advisor03` | `Crm@2026` | 课程顾问 |
+
+说明：`admin` 密码来自 `.env`；顾问账号与演示客户由 `scripts/seed_demo_data.py` 生成。
+**生产环境必须修改这些密码。**
+
 ---
 
 ## 13. 安全措施

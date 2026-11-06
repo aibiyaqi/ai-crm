@@ -2,6 +2,7 @@
 seed_demo_data.py - 生成面试演示数据（可重复执行，不产生重复记录）
 ====================================================================
 内容：
+  · 3 个演示账号（advisor01 / advisor02 / advisor03，密码 Crm@2026）
   · 8 个 K12 客户（不同年级/课程/状态/来源/顾问）
   · 10 条跟进记录（含今天到期、已超期、已成交/有意向）
   · 3 条主动告警（未读）
@@ -28,8 +29,17 @@ sys.path.insert(0, os.path.join(BASE_DIR, "AI_CRM"))
 
 from memory_sqlite import SQLiteMemory          # noqa: E402
 from models import CustomerProfile, FollowUp   # noqa: E402
+from auth import AuthService, PasswordManager   # noqa: E402
 
 NS = uuid.UUID("6f1d4b1e-2f5a-4c7e-9d3a-8b6c2e4f1a90")
+
+# 演示账号（仅本地演示用；生产环境必须改密码）
+DEMO_PASSWORD = "Crm@2026"
+ACCOUNTS = [
+    ("advisor01", "13900000001"),
+    ("advisor02", "13900000002"),
+    ("advisor03", "13900000003"),
+]
 
 
 def cid(key: str) -> str:
@@ -52,49 +62,49 @@ CUSTOMERS = [
     dict(key="zhang-yinuo", name="张一诺", phone="13812345678", identity="家长",
          age=13, school_grade="初二", intent_course="数学一对一", matched_course="初二数学同步培优",
          intent_price="300-350/课时", hourly_fee="320/课时", active_status="活跃",
-         advisor_id="A001", source="转介绍", tags=["高意向", "初二", "数学"],
+         advisor_id="advisor01", source="转介绍", tags=["高意向", "初二", "数学"],
          notes="关注中考提分，家长本人是重点中学老师，对师资要求高",
          created_days=46, last_follow_days=1),
     dict(key="li-zihan", name="李子涵", phone="13987654321", identity="学生",
          age=15, school_grade="初三", intent_course="英语小班", matched_course="中考英语冲刺小班",
          intent_price="180/课时", hourly_fee="180/课时", active_status="待跟进",
-         advisor_id="A002", source="地推", tags=["初三", "英语", "小班"],
+         advisor_id="advisor02", source="地推", tags=["初三", "英语", "小班"],
          notes="试听过一次，家长嫌校区远，正在对比另一家",
          created_days=21, last_follow_days=5),
     dict(key="wang-zixuan", name="王梓萱", phone="13755556666", identity="家长",
          age=17, school_grade="高二", intent_course="物理一对一", matched_course="高二物理竞赛班",
          intent_price="380-420/课时", hourly_fee="400/课时", active_status="活跃",
-         advisor_id="A001", source="抖音", tags=["高意向", "高二", "物理", "竞赛"],
+         advisor_id="advisor01", source="抖音", tags=["高意向", "高二", "物理", "竞赛"],
          notes="目标物理竞赛省一，需要竞赛背景老师",
          created_days=33, last_follow_days=2),
     dict(key="chen-haoran", name="陈浩然", phone="13644447777", identity="学生",
          age=18, school_grade="高三", intent_course="化学冲刺班", matched_course="高考化学押题班",
          intent_price="220/课时", hourly_fee="220/课时", active_status="待跟进",
-         advisor_id="A003", source="官网", tags=["高三", "化学", "冲刺"],
+         advisor_id="advisor03", source="官网", tags=["高三", "化学", "冲刺"],
          notes="距离高考 5 个月，想补有机化学模块",
          created_days=58, last_follow_days=6),
     dict(key="liu-siyuan", name="刘思远", phone="13533338888", identity="家长",
          age=12, school_grade="初一", intent_course="语文阅读", matched_course="初一语文阅读写作",
          intent_price="150/课时", hourly_fee="150/课时", active_status="沉睡",
-         advisor_id="A002", source="老带新", tags=["初一", "语文", "价格敏感"],
+         advisor_id="advisor02", source="老带新", tags=["初一", "语文", "价格敏感"],
          notes="预算有限，希望先上体验课",
          created_days=75, last_follow_days=22),
     dict(key="zhao-yutong", name="赵雨桐", phone="13422229999", identity="家长",
          age=11, school_grade="小升初", intent_course="数学思维", matched_course="小升初数学思维班",
          intent_price="200/课时", hourly_fee="200/课时", active_status="活跃",
-         advisor_id="A001", source="社群", tags=["已成交", "小升初", "数学"],
+         advisor_id="advisor01", source="社群", tags=["已成交", "小升初", "数学"],
          notes="已报名秋季班，家长转介绍意愿强",
          created_days=64, last_follow_days=4),
     dict(key="sun-jiayi", name="孙嘉懿", phone="13311110000", identity="学生",
          age=16, school_grade="高一", intent_course="英语口语", matched_course="高一外教口语",
          intent_price="260/课时", hourly_fee="260/课时", active_status="流失风险",
-         advisor_id="A003", source="电话名单", tags=["高一", "英语", "流失风险"],
+         advisor_id="advisor03", source="电话名单", tags=["高一", "英语", "流失风险"],
          notes="两次约课未到，电话未接",
          created_days=50, last_follow_days=15),
     dict(key="zhou-kexin", name="周可欣", phone="13200001111", identity="家长",
          age=13, school_grade="初二", intent_course="生物地理会考", matched_course="生地会考冲刺班",
          intent_price="170/课时", hourly_fee="170/课时", active_status="待跟进",
-         advisor_id="A002", source="转介绍", tags=["初二", "生地会考"],
+         advisor_id="advisor02", source="转介绍", tags=["初二", "生地会考"],
          notes="会考在明年 6 月，想提前一年准备",
          created_days=12, last_follow_days=2),
 ]
@@ -123,7 +133,18 @@ ALERTS = [
 
 def main() -> int:
     db = SQLiteMemory()
-    n_c = n_f = n_a = 0
+    auth = AuthService(db)
+    n_acct = n_c = n_f = n_a = 0
+
+    for username, phone in ACCOUNTS:
+        existing = db.get_account_by_username(username)
+        if existing:
+            db.update_account_password(
+                existing.account_id, PasswordManager.hash_password(DEMO_PASSWORD)
+            )
+        else:
+            ok, _, _ = auth.register(username, phone, DEMO_PASSWORD)
+            n_acct += 1 if ok else 0
 
     advisors = {c["key"]: c["advisor_id"] for c in CUSTOMERS}
     names = {c["key"]: c["name"] for c in CUSTOMERS}
@@ -185,7 +206,7 @@ def main() -> int:
     finally:
         db.close()
 
-    print(f"[OK] 客户 {n_c} 个 / 跟进 {n_f} 条 / 告警 {n_a} 条")
+    print(f"[OK] 账号 {n_acct} 个（顾问密码 {DEMO_PASSWORD}）/ 客户 {n_c} 个 / 跟进 {n_f} 条 / 告警 {n_a} 条")
     return 0
 
 
