@@ -793,6 +793,9 @@ python scripts/migrate_sqlite_to_mysql.py --all --truncate
 ### 12.5.3 相关自测与压测
 
 ```bash
+# 生成面试演示数据（8 个客户 / 10 条跟进 / 3 条告警，可重复执行不翻倍）
+python scripts/seed_demo_data.py
+
 python AI_CRM/test_db_mysql_dialect.py    # 方言适配 / 建表脚本 / SQL 护栏（不需要数据库）
 python AI_CRM/test_redis_scenarios.py     # Redis 六场景（需要 fakeredis）
 DB_ENGINE=mysql python AI_CRM/test_mysql_integration.py   # 真库端到端（没有 MySQL 时自动 SKIP）
