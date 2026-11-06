@@ -2354,6 +2354,17 @@ class SQLiteMemory:
             logger.error(f"[FAIL] 查询告警失败: {e}")
             return []
 
+    def alert_exists(self, dedup_key: str) -> bool:
+        """判断某去重键的告警是否已存在（用于区分“新增”与“更新”）"""
+        try:
+            self.cursor.execute(
+                "SELECT 1 FROM alerts WHERE dedup_key = ? LIMIT 1", (dedup_key,)
+            )
+            return self.cursor.fetchone() is not None
+        except Exception as e:
+            logger.error(f"[FAIL] 查询告警去重键失败: {e}")
+            return False
+
     def count_unread_alerts(self, advisor_id: Optional[str] = None) -> int:
         """统计未读告警数（前端红点 / 推送角标用）"""
         try:

@@ -420,6 +420,9 @@ class AlertScheduler:
                 customer_name = customer.name if customer else None
                 advisor_id = t.get("advisor_id") or (customer.advisor_id if customer else None)
                 for alert_type, rs in _group_reasons_by_type(reasons).items():
+                    # 先判断是否真·新增，避免把 upsert 更新也统计成“新增告警”
+                    dedup_key = f"{cid}|{alert_type}|{biz_date}"
+                    is_new = not db.alert_exists(dedup_key)
                     ok = db.upsert_alert(
                         customer_id=cid,
                         alert_type=alert_type,
@@ -429,7 +432,7 @@ class AlertScheduler:
                         severity=_severity_of(alert_type),
                         source="scheduler",
                     )
-                    if ok:
+                    if ok and is_new:
                         created += 1
                 db.mark_todo_done(t["todo_id"])
             logger.info(
