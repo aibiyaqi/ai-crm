@@ -41,3 +41,8 @@ plans/
 Thumbs.db
 .DS_Store
 Desktop.ini
+
+# ==================== Resume / Docs (prevent accidental commit) ====================
+*.docx
+*.doc
+*.pdf
